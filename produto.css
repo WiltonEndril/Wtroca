@@ -1,0 +1,143 @@
+body {
+  background: whitesmoke;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+}
+
+aside.sidebar {
+  width: 250px;
+  background: #1c1c1c;
+  color: #fff;
+  padding: 20px;
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo img {
+  height: 50px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.menu-container {
+  margin-bottom: 20px;
+}
+
+.menu-container h2 {
+  margin-bottom: 10px;
+}
+
+.menu-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.menu-container li {
+  margin-bottom: 10px;
+}
+
+.menu-container a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.menu-container a:hover {
+  text-decoration: underline;
+}
+
+.user-info {
+  margin-top: auto;
+  text-align: center;
+}
+
+.user-info span {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.user-info button {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.user-info button:hover {
+  background: #333;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+#produtos-list {
+  list-style: none;
+  padding: 0;
+}
+
+#produtos-list li {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+}
+
+#pagination {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+#pagination button {
+  padding: 5px 10px;
+}
+
+#pagination button:disabled {
+  background: #ddd;
+  cursor: not-allowed;
+}
+
+#save-changes {
+  margin-top: 20px;
+  padding: 5px 10px;
+  background: #1c1c1c;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+#save-changes:hover {
+  background: #333;
+}
+
+/* Estilo para a paginação */
+#pagination-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.pagination-button {
+  border: 1px solid #ddd;
+  background-color: #f0f0f0;
+  padding: 5px 10px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.pagination-button.active {
+  font-weight: bold;
+  background-color: #ddd;
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  background-color: #ccc;
+  color: #666;
+}
