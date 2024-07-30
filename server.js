@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname))); // Servir arquivos estáticos
 
 // Configura o express-paginate
-app.use(paginate.middleware(10, 50)); // Limite de 10 itens por página, máximo de 50 itens por página
+app.use(paginate.middleware(18, 50)); // Limite de 10 itens por página, máximo de 50 itens por página
 
 // Middleware para autenticação
 function authenticateToken(req, res, next) {
@@ -84,10 +84,12 @@ app.get('/produtos', authenticateToken, (req, res) => {
     res.sendFile(path.join(__dirname, 'produtos.html'));
 });
 
-// Rota para buscar produtos com paginação
+// Rota para buscar produtos com paginação e pesquisa
+// Rota para buscar produtos com paginação e pesquisa
 app.get('/api/produtos', authenticateToken, (req, res) => {
-    const limit = req.query.limit || 20; // Número de produtos por página
+    const limit = req.query.limit || 18; // Número de produtos por página
     const offset = req.skip; // Deslocamento calculado pelo express-paginate
+    const search = req.query.search ? `%${req.query.search}%` : '%'; // Termo de pesquisa
 
     firebird.attach(options, function(err, db) {
         if (err) {
@@ -95,8 +97,8 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
             return res.status(500).send('Erro interno ao conectar ao banco de dados');
         }
 
-        const countQuery = 'SELECT COUNT(*) AS total FROM ITENS';
-        db.query(countQuery, function(err, countResult) {
+        const countQuery = 'SELECT COUNT(*) AS total FROM ITENS WHERE DESCRICAO LIKE ?';
+        db.query(countQuery, [search], function(err, countResult) {
             if (err) {
                 console.error('Erro ao contar produtos:', err);
                 db.detach();
@@ -105,8 +107,15 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
 
             const total = countResult[0].TOTAL;
 
-            const selectQuery = 'SELECT ID, DESCRICAO, VENDA FROM ITENS ORDER BY ID ROWS ? TO ?';
-            db.query(selectQuery, [offset + 1, offset + limit], function(err, products) {
+            // Consulta atualizada para incluir o código de barras
+            const selectQuery = `
+                SELECT ITENS.CODIGOBARRAS, ITENS.DESCRICAO, ITENS.VENDA, COALESCE(ESTOQUE.SALDO, 0) AS QUANTIDADE
+                FROM ITENS
+                LEFT JOIN ITENS_ESTOQUE ESTOQUE ON ITENS.CODIGOBARRAS = ESTOQUE.CODIGO
+                WHERE ITENS.DESCRICAO LIKE ?
+                ORDER BY ITENS.ID ROWS ? TO ?`;
+        
+            db.query(selectQuery, [search, offset + 1, offset + limit], function(err, products) {
                 if (err) {
                     console.error('Erro ao executar a consulta:', err);
                     db.detach();
@@ -127,6 +136,7 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
         });
     });
 });
+
 
 // Rota para atualizar produtos
 app.post('/api/produtos/atualizar', authenticateToken, (req, res) => {

@@ -1,38 +1,65 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos</title>
-    <link rel="stylesheet" href="produto.css">
-    <link rel="stylesheet" href="global.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="produto.css"> <!-- Seu CSS personalizado -->
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="logo img">
-            <img src="img/logo2.png" alt="Logo">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <aside class="col-md-3 col-lg-2 bg-dark text-white p-3 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <img src="img/logo2.png" alt="Logo" class="img-fluid" style="height: 50px;">
+                    <button id="hamburger-button" class="btn btn-light d-md-none">
+                        <img src="img/ham.png" alt="Menu" style="width: 30px;">
+                    </button>
+                </div>
+                <div class="menu-container mb-3">
+                    <h2>Menu</h2>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Home</a></li>
+                        <li><a href="#" class="text-white">Produtos</a></li>
+                        <!-- Outros itens de menu -->
+                    </ul>
+                </div>
+                <div class="user-info text-center mt-auto">
+                    <span>Usuário</span>
+                    <button id="logout-button" class="btn btn-outline-light">Logout</button>
+                </div>
+            </aside>
+            <!-- Main Content -->
+            <main class="col-md-10 col-lg-10 ml-sm-auto px-4">
+                <h1 class="mb-4">Lista de Produtos</h1>
+                <!-- Barra de Pesquisa -->
+                <div id="search-container" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Pesquisar produtos" aria-label="Pesquisar produtos" aria-describedby="search-button">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="search-button">Buscar</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Lista de Produtos -->
+                <div id="produtos-list" class="row">
+                    <!-- Produtos serão inseridos aqui -->
+                </div>
+                <!-- Paginação -->
+                <div id="pagination-container" class="d-flex justify-content-center mt-4">
+                    <!-- Paginação será inserida aqui -->
+                </div>
+            </main>
         </div>
-        <div class="menu-container">
-            <h2>Menu</h2>
-            <ul>
-                <li><a href="#">Item 1</a></li>
-                <li><a href="#">Item 2</a></li>
-                <li><a href="#">Item 3</a></li>
-            </ul>
-        </div>
-        <div class="user-info">
-            <span id="username"></span>
-            <button id="logout-button">Sair</button>
-        </div>
-    </aside>
+    </div>
 
-    <main>
-        <h1>Lista de Produtos</h1>
-        <ul id="produtos-list"></ul>
-        <!-- Contêiner para a paginação -->
-        <div id="pagination-container"></div>
-    </main>
-
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="produtos.js"></script>
 </body>
 </html>
