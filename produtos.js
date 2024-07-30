@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '/';
             return;
         }
-  
+    
         fetch(`/api/produtos?page=${page}&limit=${limit}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -20,47 +20,65 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            produtosList.innerHTML = '';
+            produtosList.innerHTML = ''; // Limpar lista existente
             data.products.forEach(produto => {
                 const li = document.createElement('li');
                 li.className = 'produto-item';
-
+    
                 li.innerHTML = `
                     Descrição: <input type="text" value="${produto.DESCRICAO}" data-id="${produto.ID}">
                     Preço: <input type="number" step="0.01" value="${produto.VENDA}" data-id="${produto.ID}">
                     <button class="edit-button" data-id="${produto.ID}">Editar</button>
                 `;
                 produtosList.appendChild(li);
-
-                // Adiciona evento de clique para o botão de editar
-                li.querySelector('.edit-button').addEventListener('click', function() {
-                    editProduto(produto.ID, li);
-                });
             });
-
-            updatePagination(data.page, data.totalPages);
+    
+            updatePagination(data.currentPage, data.pageCount, data.hasNext);
         })
         .catch(error => {
             console.error('Erro ao buscar produtos:', error);
         });
     }
-
-    function updatePagination(currentPage, totalPages) {
-        paginationContainer.innerHTML = '';
-        if (totalPages <= 1) return;
-
-        for (let i = 1; i <= totalPages; i++) {
+    
+    function updatePagination(currentPage, pageCount, hasNext) {
+        paginationContainer.innerHTML = ''; // Limpa a paginação existente
+    
+        if (pageCount <= 1) return; // Não exibe paginação se houver apenas uma página
+    
+        const maxButtons = 10; // Número máximo de botões de paginação a serem exibidos
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = startPage + maxButtons - 1;
+    
+        if (endPage > pageCount) {
+            endPage = pageCount;
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+    
+        for (let i = startPage; i <= endPage; i++) {
             const pageButton = document.createElement('button');
             pageButton.textContent = i;
             pageButton.className = 'pagination-button';
+    
             if (i === currentPage) {
-                pageButton.disabled = true;
+                pageButton.disabled = true; // Desabilita o botão da página atual
                 pageButton.classList.add('active');
             }
+    
             pageButton.addEventListener('click', () => {
-                fetchProdutos(i);
+                fetchProdutos(i); // Chama a função fetchProdutos com o número da página
             });
-            paginationContainer.appendChild(pageButton);
+    
+            paginationContainer.appendChild(pageButton); // Adiciona o botão à página
+        }
+    
+        if (hasNext) {
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Próximo';
+            nextButton.className = 'pagination-button';
+            nextButton.addEventListener('click', () => {
+                fetchProdutos(currentPage + 1);
+            });
+            paginationContainer.appendChild(nextButton);
         }
     }
 
@@ -101,6 +119,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   
     logoutButton.addEventListener('click', logout);
-  
+    produtosList.addEventListener('click', (event) => {
+        if (event.target.classList.contains('edit-button')) {
+            const id = event.target.getAttribute('data-id');
+            const item = event.target.closest('.produto-item');
+            editProduto(id, item);
+        }
+    });
+
     fetchProdutos();
 });

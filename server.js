@@ -86,9 +86,8 @@ app.get('/produtos', authenticateToken, (req, res) => {
 
 // Rota para buscar produtos com paginação
 app.get('/api/produtos', authenticateToken, (req, res) => {
-    const page = parseInt(req.query.page) || 1; // Página atual
-    const limit = parseInt(req.query.limit) || 20; // Número de produtos por página (ajustado para 20)
-    const offset = (page - 1) * limit; // Deslocamento para consulta
+    const limit = req.query.limit || 20; // Número de produtos por página
+    const offset = req.skip; // Deslocamento calculado pelo express-paginate
 
     firebird.attach(options, function(err, db) {
         if (err) {
@@ -104,7 +103,7 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
                 return res.status(500).send('Erro interno ao contar produtos');
             }
 
-            const total = countResult[0].total;
+            const total = countResult[0].TOTAL;
 
             const selectQuery = 'SELECT ID, DESCRICAO, VENDA FROM ITENS ORDER BY ID ROWS ? TO ?';
             db.query(selectQuery, [offset + 1, offset + limit], function(err, products) {
@@ -114,18 +113,20 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
                     return res.status(500).send('Erro interno ao executar a consulta no banco de dados');
                 }
 
+                const pageCount = Math.ceil(total / limit);
                 res.json({
                     products,
                     total,
-                    page,
-                    totalPages: Math.ceil(total / limit)
+                    pageCount,
+                    currentPage: req.query.page || 1,
+                    hasNext: paginate.hasNextPages(req)(pageCount)
                 });
+
                 db.detach();
             });
         });
     });
 });
-
 
 // Rota para atualizar produtos
 app.post('/api/produtos/atualizar', authenticateToken, (req, res) => {
