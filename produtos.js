@@ -2,74 +2,84 @@ document.addEventListener('DOMContentLoaded', function() {
     const produtosList = document.getElementById('produtos-list');
     const paginationContainer = document.getElementById('pagination-container');
     const logoutButton = document.getElementById('logout-button');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
 
-    function fetchProdutos(page = 1) {
+    let currentSearchTerm = ''; // Armazena o termo de busca atual
+
+    function fetchProdutos(page = 1, searchTerm = '') {
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = '/';
             return;
         }
 
-        fetch(`/api/produtos?page=${page}&limit=20`, {
+        fetch(`/api/produtos?page=${page}&limit=20&search=${encodeURIComponent(searchTerm)}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         })
         .then(response => response.json())
         .then(data => {
-            produtosList.innerHTML = ''; // Limpa a lista existente
+            console.log(data);
 
-            data.products.forEach(produto => {
-                const card = document.createElement('div');
-                card.className = 'produto-card';
+            if (data.products) {
+                produtosList.innerHTML = ''; // Limpa a lista existente
 
-                // Código de Barras
-                const codigoBarrasField = document.createElement('div');
-                codigoBarrasField.className = 'produto-field';
-                codigoBarrasField.innerHTML = `
-                    <label for="codigo-barras-${produto.ID}">Código de Barras:</label>
-                    <input type="text" id="codigo-barras-${produto.ID}" class="codigo-barras" value="${produto.CODIGOBARRAS}" readonly>
-                `;
-                card.appendChild(codigoBarrasField);
+                data.products.forEach(produto => {
+                    const card = document.createElement('div');
+                    card.className = 'produto-card col-md-3'; // Ajuste a classe conforme necessário
 
-                // Descrição
-                const descricaoField = document.createElement('div');
-                descricaoField.className = 'produto-field';
-                descricaoField.innerHTML = `
-                    <label for="descricao-${produto.ID}">Descrição:</label>
-                    <input type="text" id="descricao-${produto.ID}" class="descricao" value="${produto.DESCRICAO}">
-                `;
-                card.appendChild(descricaoField);
+                    // Código de Barras
+                    const codigoBarrasField = document.createElement('div');
+                    codigoBarrasField.className = 'produto-field';
+                    codigoBarrasField.innerHTML = `
+                        <label for="codigo-barras-${produto.ID}">Código de Barras:</label>
+                        <input type="text" id="codigo-barras-${produto.ID}" class="codigo-barras" value="${produto.CODIGOBARRAS}" readonly>
+                    `;
+                    card.appendChild(codigoBarrasField);
 
-                // Preço
-                const precoField = document.createElement('div');
-                precoField.className = 'produto-field';
-                precoField.innerHTML = `
-                    <label for="preco-${produto.ID}">Preço:</label>
-                    <input type="number" id="preco-${produto.ID}" class="preco" step="0.01" value="${produto.VENDA}">
-                `;
-                card.appendChild(precoField);
+                    // Descrição
+                    const descricaoField = document.createElement('div');
+                    descricaoField.className = 'produto-field';
+                    descricaoField.innerHTML = `
+                        <label for="descricao-${produto.ID}">Descrição:</label>
+                        <input type="text" id="descricao-${produto.ID}" class="descricao" value="${produto.DESCRICAO}">
+                    `;
+                    card.appendChild(descricaoField);
 
-                // Estoque
-                const estoqueField = document.createElement('div');
-                estoqueField.className = 'produto-field';
-                estoqueField.innerHTML = `
-                    <label for="estoque-${produto.ID}">Estoque:</label>
-                    <input type="number" id="estoque-${produto.ID}" class="estoque" value="${produto.QUANTIDADE}">
-                `;
-                card.appendChild(estoqueField);
+                    // Preço
+                    const precoField = document.createElement('div');
+                    precoField.className = 'produto-field';
+                    precoField.innerHTML = `
+                        <label for="preco-${produto.ID}">Preço:</label>
+                        <input type="number" id="preco-${produto.ID}" class="preco" step="0.01" value="${produto.VENDA}">
+                    `;
+                    card.appendChild(precoField);
 
-                // Botão Gravar
-                const saveButton = document.createElement('button');
-                saveButton.className = 'edit-button';
-                saveButton.innerText = 'Gravar';
-                saveButton.setAttribute('data-id', produto.ID);
-                card.appendChild(saveButton);
+                    // Estoque
+                    const estoqueField = document.createElement('div');
+                    estoqueField.className = 'produto-field';
+                    estoqueField.innerHTML = `
+                        <label for="estoque-${produto.ID}">Estoque:</label>
+                        <input type="number" id="estoque-${produto.ID}" class="estoque" value="${produto.QUANTIDADE}">
+                    `;
+                    card.appendChild(estoqueField);
 
-                produtosList.appendChild(card);
-            });
+                    // Botão Gravar
+                    const saveButton = document.createElement('button');
+                    saveButton.className = 'edit-button';
+                    saveButton.innerText = 'Gravar';
+                    saveButton.setAttribute('data-id', produto.ID);
+                    card.appendChild(saveButton);
 
-            updatePagination(data.currentPage, data.pageCount, data.hasNext);
+                    produtosList.appendChild(card);
+                });
+
+                updatePagination(data.currentPage, data.pageCount, data.hasNext);
+            } else {
+                console.error('Dados de produtos não encontrados.');
+            }
         })
         .catch(error => {
             console.error('Erro ao buscar produtos:', error);
@@ -101,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             pageButton.addEventListener('click', () => {
-                fetchProdutos(i); // Chama a função fetchProdutos com o número da página
+                fetchProdutos(i, currentSearchTerm); // Chama a função fetchProdutos com o número da página e o termo de busca
             });
 
             paginationContainer.appendChild(pageButton); // Adiciona o botão à página
@@ -112,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             nextButton.textContent = 'Próximo';
             nextButton.className = 'pagination-button';
             nextButton.addEventListener('click', () => {
-                fetchProdutos(currentPage + 1);
+                fetchProdutos(currentPage + 1, currentSearchTerm);
             });
             paginationContainer.appendChild(nextButton);
         }
@@ -163,6 +173,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     logoutButton.addEventListener('click', logout);
+
+    if (searchButton) {
+        // Adiciona o listener para o botão de busca
+        searchButton.addEventListener('click', function() {
+            currentSearchTerm = searchInput.value.trim(); // Atualiza o termo de busca atual
+            fetchProdutos(1, currentSearchTerm); // Recarrega produtos filtrados na página 1
+        });
+    } else {
+        console.error('Elemento com id "search-button" não encontrado.');
+    }
+
+    if (searchInput) {
+        // Adiciona o listener para atualizar a pesquisa quando o usuário pressiona Enter
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                currentSearchTerm = searchInput.value.trim(); // Atualiza o termo de busca atual
+                fetchProdutos(1, currentSearchTerm); // Recarrega produtos filtrados na página 1
+            }
+        });
+    } else {
+        console.error('Elemento com id "search-input" não encontrado.');
+    }
 
     fetchProdutos(); // Carregar a primeira página de produtos
 });
