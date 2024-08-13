@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentSearchTerm = ''; // Armazena o termo de busca atual
 
-    function fetchProdutos(page = 1, searchTerm = '') {
+     function fetchProdutos(page = 1, searchTerm = '') {
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = '/';
@@ -21,14 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log(data);
 
             if (data.products) {
                 produtosList.innerHTML = ''; // Limpa a lista existente
 
                 data.products.forEach(produto => {
                     const card = document.createElement('div');
-                    card.className = 'produto-card col-md-3'; // Ajuste a classe conforme necessário
+                    card.className = 'produto-card col-md-3'; 
 
                     // Código de Barras
                     const codigoBarrasField = document.createElement('div');
@@ -128,24 +127,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Função para salvar as alterações no produto
     function saveChanges(id) {
+        const codigoBarras = document.getElementById(`codigo-barras-${id}`).value.trim();
         const descricao = document.getElementById(`descricao-${id}`).value.trim();
         const preco = parseFloat(document.getElementById(`preco-${id}`).value.trim());
-        const estoque = parseInt(document.getElementById(`estoque-${id}`).value.trim());
-
+        const quantidade = parseInt(document.getElementById(`estoque-${id}`).value.trim());
+    
+        if (!codigoBarras || !descricao || isNaN(preco) || isNaN(quantidade)) {
+            alert('Por favor, preencha todos os campos corretamente.');
+            return;
+        }
+    
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = '/';
             return;
         }
-
+    
         fetch('/api/produtos/atualizar', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ id, descricao, preco, estoque })
+            body: JSON.stringify([{ id, codigoBarras, descricao, preco, quantidade }])
         })
         .then(response => response.json())
         .then(data => {
@@ -159,6 +165,17 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro ao atualizar o produto:', error);
         });
     }
+        
+
+// Botão Gravar
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.edit-button').forEach(button => {
+        button.addEventListener('click', event => {
+            const id = event.target.getAttribute('data-id');
+            saveChanges(id);
+        });
+    });
+});
 
     function logout() {
         localStorage.removeItem('token');

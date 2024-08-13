@@ -3,7 +3,7 @@ const firebird = require('node-firebird');
 const bodyParser = require('body-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const paginate = require ( 'express-paginate' ) ;
+const paginate = require('express-paginate');
 const app = express();
 const port = 3000;
 
@@ -19,13 +19,13 @@ const options = {
     pageSize: 4096
 };
 
-const SECRET_KEY = 'sua_chave_secreta_aqui';
+const SECRET_KEY = '1234';
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname))); // Servir arquivos estáticos
 
 // Configura o express-paginate
-app.use(paginate.middleware(18, 50)); // Limite de 10 itens por página, máximo de 50 itens por página
+app.use(paginate.middleware(18, 50)); // Limite de 18 itens por página, máximo de 50 itens por página
 
 // Middleware para autenticação
 function authenticateToken(req, res, next) {
@@ -51,6 +51,8 @@ app.get('/', (req, res) => {
 app.post('/login', (req, res) => {
     const { usuario, senha } = req.body;
 
+    const usuarioUpper = usuario.toUpperCase();
+
     firebird.attach(options, function(err, db) {
         if (err) {
             console.error('Erro ao conectar ao banco de dados:', err);
@@ -59,7 +61,7 @@ app.post('/login', (req, res) => {
         }
 
         const query = 'SELECT * FROM USUARIOS WHERE NOME = ? AND SENHA = ?';
-        db.query(query, [usuario, senha], function(err, result) {
+        db.query(query, [usuarioUpper, senha], function(err, result) {
             if (err) {
                 console.error('Erro ao executar a consulta:', err);
                 res.status(500).send('Erro interno ao executar a consulta no banco de dados');
@@ -68,7 +70,12 @@ app.post('/login', (req, res) => {
             }
 
             if (result.length > 0) {
-                const token = jwt.sign({ usuario }, SECRET_KEY, { expiresIn: '1h' });
+                const usuarioData = result[0]; // Supondo que a primeira linha contenha os dados do usuário
+                const token = jwt.sign(
+                    { usuario: usuarioData.NOME }, // Incluindo o nome do usuário no token
+                    SECRET_KEY,
+                    { expiresIn: '1h' }
+                );
                 res.json({ success: true, token });
             } else {
                 res.json({ success: false });
@@ -85,11 +92,10 @@ app.get('/produtos', authenticateToken, (req, res) => {
 });
 
 // Rota para buscar produtos com paginação e pesquisa
-// Rota para buscar produtos com paginação e pesquisa
 app.get('/api/produtos', authenticateToken, (req, res) => {
-    const limit = req.query.limit || 18; // Número de produtos por página
+    const limit = parseInt(req.query.limit) || 18; // Número de produtos por página
     const offset = req.skip; // Deslocamento calculado pelo express-paginate
-    const search = req.query.search ? `%${req.query.search}%` : '%'; // Termo de pesquisa
+    const search = req.query.search ? `%${req.query.search.toUpperCase()}%` : '%'; // Termo de pesquisa em maiúsculas
 
     firebird.attach(options, function(err, db) {
         if (err) {
@@ -97,7 +103,7 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
             return res.status(500).send('Erro interno ao conectar ao banco de dados');
         }
 
-        const countQuery = 'SELECT COUNT(*) AS total FROM ITENS WHERE DESCRICAO LIKE ?';
+        const countQuery = 'SELECT COUNT(*) AS total FROM ITENS WHERE UPPER(DESCRICAO) LIKE ?';
         db.query(countQuery, [search], function(err, countResult) {
             if (err) {
                 console.error('Erro ao contar produtos:', err);
@@ -107,13 +113,24 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
 
             const total = countResult[0].TOTAL;
 
-            // Consulta atualizada para incluir o código de barras
             const selectQuery = `
-                SELECT ITENS.CODIGOBARRAS, ITENS.DESCRICAO, ITENS.VENDA, COALESCE(ESTOQUE.SALDO, 0) AS QUANTIDADE
-                FROM ITENS
-                LEFT JOIN ITENS_ESTOQUE ESTOQUE ON ITENS.CODIGOBARRAS = ESTOQUE.CODIGO
-                WHERE ITENS.DESCRICAO LIKE ?
-                ORDER BY ITENS.ID ROWS ? TO ?`;
+                SELECT 
+                    ITENS.ID,
+                    ITENS.CODIGOBARRAS, 
+                    ITENS.DESCRICAO, 
+                    ITENS.VENDA, 
+                    COALESCE(ESTOQUE.SALDO, 0) AS QUANTIDADE
+                FROM 
+                    ITENS
+                LEFT JOIN 
+                    ITENS_ESTOQUE ESTOQUE ON ITENS.CODIGOBARRAS = ESTOQUE.CODIGO
+                WHERE 
+                    UPPER(ITENS.DESCRICAO) LIKE ?
+                ORDER BY 
+                    ITENS.ID
+                ROWS 
+                    ? TO ?;
+`;
         
             db.query(selectQuery, [search, offset + 1, offset + limit], function(err, products) {
                 if (err) {
@@ -137,43 +154,66 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
     });
 });
 
-
 // Rota para atualizar produtos
 app.post('/api/produtos/atualizar', authenticateToken, (req, res) => {
-    const produtos = req.body;
+    const produtos = req.body; // Espera-se que seja um array de produtos
 
     firebird.attach(options, function(err, db) {
         if (err) {
             console.error('Erro ao conectar ao banco de dados:', err);
-            res.status(500).send('Erro interno ao conectar ao banco de dados');
-            return;
+            return res.status(500).send('Erro interno ao conectar ao banco de dados');
         }
 
+        if (!Array.isArray(produtos)) {
+            db.detach();
+            return res.status(400).send('Dados inválidos');
+        }
+
+        // Lista de promessas para atualização de produtos e estoque
         const promises = produtos.map(produto => {
-            const query = 'UPDATE ITENS SET DESCRICAO = ?, VENDA = ?, QUANTIDADE = ? WHERE ID = ?';
+            if (produto.descricao === undefined || isNaN(produto.preco) || isNaN(produto.quantidade) || produto.codigoBarras === undefined) {
+                return Promise.reject(new Error(`Dados inválidos para o produto com código de barras ${produto.codigoBarras}`));
+            }
+
+            const updateItemQuery = 'UPDATE ITENS SET DESCRICAO = ?, VENDA = ? WHERE CODIGOBARRAS = ?';
+            const updateStockQuery = 'UPDATE ITENS_ESTOQUE SET SALDO = ?';
+
             return new Promise((resolve, reject) => {
-                db.query(query, [produto.descricao, produto.preco, produto.quantidade, produto.id], (err) => {
+                db.query(updateItemQuery, [produto.descricao, produto.preco, produto.codigoBarras], (err) => {
                     if (err) {
                         console.error('Erro ao atualizar o produto:', err);
                         reject(err);
-                    } else {
-                        resolve();
+                        return;
                     }
+            
+                    // Atualiza o saldo do estoque, passando dois parâmetros: saldo e código
+                    db.query(updateStockQuery, [produto.quantidade], (err) => {
+                        if (err) {
+                            console.error('Erro ao atualizar o estoque:', err);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
                 });
             });
         });
 
+        // Executa todas as promessas
         Promise.all(promises)
             .then(() => {
                 res.json({ success: true });
                 db.detach();
             })
             .catch(err => {
+                console.error('Erro interno ao atualizar produtos:', err);
                 res.status(500).send('Erro interno ao atualizar produtos');
                 db.detach();
             });
     });
 });
+
+
 
 // Rota para realizar logout
 app.post('/logout', (req, res) => {
