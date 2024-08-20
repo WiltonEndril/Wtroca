@@ -8,7 +8,7 @@ body {
 }
 
 /* Estilo do sidebar */
-aside.sidebar {
+aside#sidebar {
   width: 250px;
   background: #1c1c1c;
   color: #fff;
@@ -17,7 +17,11 @@ aside.sidebar {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
 }
 
 /* Ajustes no logo */
@@ -158,19 +162,25 @@ main {
 
 /* Responsividade */
 @media (max-width: 768px) {
-  aside.sidebar {
+  aside#sidebar {
     transform: translateX(-100%); /* Inicialmente fora da tela */
   }
 
-  aside.sidebar.visible {
+  aside#sidebar.visible {
     transform: translateX(0); /* Mostra o sidebar */
   }
 
-  .hamburger {
-    display: block;
+  #hamburger-button {
+    display: block; /* Exibe o botão hambúrguer em telas pequenas */
   }
 
   .produto-card {
     flex: 1 1 100%; /* Largura total em dispositivos móveis */
+  }
+}
+
+@media (min-width: 769px) {
+  #hamburger-button {
+    display: none;
   }
 }
