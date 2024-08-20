@@ -174,10 +174,10 @@ app.post('/api/produtos/atualizar', authenticateToken, (req, res) => {
             if (produto.descricao === undefined || isNaN(produto.preco) || isNaN(produto.quantidade) || produto.codigoBarras === undefined) {
                 return Promise.reject(new Error(`Dados inválidos para o produto com código de barras ${produto.codigoBarras}`));
             }
-
+        
             const updateItemQuery = 'UPDATE ITENS SET DESCRICAO = ?, VENDA = ? WHERE CODIGOBARRAS = ?';
-            const updateStockQuery = 'UPDATE ITENS_ESTOQUE SET SALDO = ?';
-
+            const updateStockQuery = 'UPDATE ITENS_ESTOQUE SET SALDO = ? WHERE CODIGO = ?';
+        
             return new Promise((resolve, reject) => {
                 db.query(updateItemQuery, [produto.descricao, produto.preco, produto.codigoBarras], (err) => {
                     if (err) {
@@ -185,9 +185,9 @@ app.post('/api/produtos/atualizar', authenticateToken, (req, res) => {
                         reject(err);
                         return;
                     }
-            
+        
                     // Atualiza o saldo do estoque, passando dois parâmetros: saldo e código
-                    db.query(updateStockQuery, [produto.quantidade], (err) => {
+                    db.query(updateStockQuery, [produto.quantidade, produto.codigoBarras], (err) => {
                         if (err) {
                             console.error('Erro ao atualizar o estoque:', err);
                             reject(err);
