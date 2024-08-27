@@ -1,0 +1,30 @@
+{
+  "name": "w-troca",
+  "version": "1.0.0",
+  "main": "server.js",
+  "bin": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-paginate": "^1.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "node-firebird": "^1.1.8"
+  },
+  "pkg": {
+    "assets": [
+      "img/**/*",
+      "global.css",
+      "login.css",
+      "produto.css",
+      "produtos.html",
+      "produtos.js",
+      "script.js"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "output": "WF-troca"
+  }
+}

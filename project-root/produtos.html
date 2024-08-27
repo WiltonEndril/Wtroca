@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="produto.css"> <!-- Seu CSS personalizado -->
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="col-md-3 col-lg-2 bg-dark text-white p-3 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <img src="img/logo2.png" alt="Logo" class="img-fluid" style="height: 50px;">
+                    <button id="hamburger-button" class="btn btn-light d-md-none">
+                        <img src="img/ham.png" alt="Menu" style="width: 30px;">
+                    </button>
+                </div>
+                <div class="menu-container mb-3">
+                    <h2>Menu</h2>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Home</a></li>
+                        <li><a href="#" class="text-white">Produtos</a></li>
+                        <!-- Outros itens de menu -->
+                    </ul>
+                </div>
+                <div class="user-info text-center mt-auto">
+                    <button id="logout-button" class="btn btn-outline-light">Sair</button>
+                </div>
+            </aside>
+            <!-- Main Content -->
+            <main class="col-md-10 col-lg-10 ml-sm-auto px-4">
+                <h1 class="mb-4">Lista de Produtos</h1>
+                <!-- Barra de Pesquisa -->
+                <div id="search-container" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search-input" placeholder="Pesquisar produtos" aria-label="Pesquisar produtos" aria-describedby="search-button">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="search-button">Buscar</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Lista de Produtos -->
+                <div id="produtos-list" class="row">
+                    <!-- Produtos serão inseridos aqui -->
+                </div>
+                <!-- Paginação -->
+                <div id="pagination-container" class="d-flex justify-content-center mt-4">
+                    <!-- Paginação será inserida aqui -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="produtos.js"></script>
+    <script>
+        document.getElementById('hamburger-button').addEventListener('click', function() {
+    let sidebar = document.getElementById('sidebar');
+    if (sidebar.classList.contains('sidebar-hidden')) {
+        sidebar.classList.remove('sidebar-hidden');
+        sidebar.classList.add('sidebar-visible');
+    } else {
+        sidebar.classList.add('sidebar-hidden');
+        sidebar.classList.remove('sidebar-visible');
+    }
+});
+    </script>
+</body>
+</html>
