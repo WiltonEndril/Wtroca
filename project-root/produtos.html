@@ -6,7 +6,11 @@
     <title>Produtos</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="produto.css"> <!-- Seu CSS personalizado -->
+    <link rel="stylesheet" href="produto.css">
+    <!-- Font Awesome (para ícone de câmera) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quaggaJS/0.12.1/quagga.min.js"></script>
+    <script src="quagga.min.js"></script>
 </head>
 <body>
     <div class="container-fluid">
@@ -24,7 +28,6 @@
                     <ul class="list-unstyled">
                         <li><a href="#" class="text-white">Home</a></li>
                         <li><a href="#" class="text-white">Produtos</a></li>
-                        <!-- Outros itens de menu -->
                     </ul>
                 </div>
                 <div class="user-info text-center mt-auto">
@@ -40,9 +43,13 @@
                         <input type="text" class="form-control" id="search-input" placeholder="Pesquisar produtos" aria-label="Pesquisar produtos" aria-describedby="search-button">
                         <div class="input-group-append">
                             <button class="btn btn-outline-secondary" type="button" id="search-button">Buscar</button>
+                            <button class="btn btn-outline-secondary" type="button" id="camera-button" data-toggle="modal" data-target="#scannerModal">
+                                <i class="fas fa-camera"></i> <!-- Ícone de câmera -->
+                            </button>
                         </div>
                     </div>
                 </div>
+
                 <!-- Lista de Produtos -->
                 <div id="produtos-list" class="row">
                     <!-- Produtos serão inseridos aqui -->
@@ -55,22 +62,120 @@
         </div>
     </div>
 
+    <!-- Modal de Scanner de Código de Barras -->
+    <div class="modal fade" id="scannerModal" tabindex="-1" role="dialog" aria-labelledby="scannerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scannerModalLabel">Leitura de Código de Barras</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Quagga.js Scanner -->
+                    <div id="quagga-scanner" style="width: 100%; height: 300px; background-color: #000;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Produto</h5>
+                    <button type="button" class="close" id="modal-close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="form-group">
+                            <label for="modal-codigo-barras">Código de Barras:</label>
+                            <input type="text" class="form-control" id="modal-codigo-barras" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-descricao">Descrição:</label>
+                            <input type="text" class="form-control" id="modal-descricao">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-preco">Preço:</label>
+                            <input type="number" class="form-control" id="modal-preco" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-estoque">Estoque:</label>
+                            <input type="number" class="form-control" id="modal-estoque">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="modal-save-button">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> <!-- Trocar para a versão completa do jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="produtos.js"></script>
     <script>
         document.getElementById('hamburger-button').addEventListener('click', function() {
-    let sidebar = document.getElementById('sidebar');
-    if (sidebar.classList.contains('sidebar-hidden')) {
-        sidebar.classList.remove('sidebar-hidden');
-        sidebar.classList.add('sidebar-visible');
-    } else {
-        sidebar.classList.add('sidebar-hidden');
-        sidebar.classList.remove('sidebar-visible');
-    }
-});
+            let sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('sidebar-hidden')) {
+                sidebar.classList.remove('sidebar-hidden');
+                sidebar.classList.add('sidebar-visible');
+            } else {
+                sidebar.classList.add('sidebar-hidden');
+                sidebar.classList.remove('sidebar-visible');
+            }
+        });
     </script>
+
+    <script>
+        $('#scannerModal').on('shown.bs.modal', function () {
+            // Inicializar o Quagga.js quando o modal for mostrado
+            Quagga.init({
+                inputStream: {
+                    type: "LiveStream",
+                    target: document.querySelector('#quagga-scanner'), // Local onde a câmera será exibida
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment" // Usa a câmera traseira do dispositivo
+                    },
+                },
+                decoder: {
+                    readers: ["ean_reader"] // Define o tipo de código de barras a ser lido
+                }
+            }, function(err) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                Quagga.start(); // Iniciar a leitura do código de barras
+            });
+
+            // Capturar o código de barras lido
+            Quagga.onDetected(function(data) {
+                var code = data.codeResult.code;
+                $('#search-input').val(code); // Preencher o campo de busca com o código lido
+                Quagga.stop(); // Parar o scanner após a leitura
+                $('#scannerModal').modal('hide'); // Fechar o modal
+            });
+        });
+
+        // Parar o Quagga.js quando o modal for fechado
+        $('#scannerModal').on('hidden.bs.modal', function () {
+            Quagga.stop();
+        });
+    </script>
+    <script src="produtos.js"></script>
 </body>
 </html>

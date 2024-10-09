@@ -4,10 +4,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutButton = document.getElementById('logout-button');
     const searchInput = document.getElementById('search-input');
     const searchButton = document.getElementById('search-button');
+    const cameraButton = document.getElementById('camera-button'); // Botão da câmera
+    const modalElement = document.getElementById('editModal'); 
+    const modalCloseButton = document.getElementById('modal-close');
+    const saveChangesButton = document.getElementById('modal-save-button');
+    const quaggaContainer = document.getElementById('quagga-container'); // Elemento para o scanner de câmera
+    
+    const modal = new bootstrap.Modal(modalElement);
 
-    let currentSearchTerm = ''; // Armazena o termo de busca atual
+    let currentSearchTerm = ''; 
+    let currentProductId = null; 
 
-     function fetchProdutos(page = 1, searchTerm = '') {
+    function fetchProdutos(page = 1, searchTerm = '') {
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = '/';
@@ -21,59 +29,51 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-
             if (data.products) {
-                produtosList.innerHTML = ''; // Limpa a lista existente
+                produtosList.innerHTML = ''; 
+                
+                const table = document.createElement('table');
+                table.classList.add('table', 'table-striped');
+
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Estoque</th>
+                        <th>Ações</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
 
                 data.products.forEach(produto => {
-                    const card = document.createElement('div');
-                    card.className = 'produto-card col-md-3'; 
+                    const row = document.createElement('tr');
 
-                    // Código de Barras
-                    const codigoBarrasField = document.createElement('div');
-                    codigoBarrasField.className = 'produto-field';
-                    codigoBarrasField.innerHTML = `
-                        <label for="codigo-barras-${produto.ID}">Código de Barras:</label>
-                        <input type="text" id="codigo-barras-${produto.ID}" class="codigo-barras" value="${produto.CODIGOBARRAS}" readonly>
-                    `;
-                    card.appendChild(codigoBarrasField);
+                    const descricaoCell = document.createElement('td');
+                    descricaoCell.textContent = produto.DESCRICAO;
+                    row.appendChild(descricaoCell);
 
-                    // Descrição
-                    const descricaoField = document.createElement('div');
-                    descricaoField.className = 'produto-field';
-                    descricaoField.innerHTML = `
-                        <label for="descricao-${produto.ID}">Descrição:</label>
-                        <input type="text" id="descricao-${produto.ID}" class="descricao" value="${produto.DESCRICAO}">
-                    `;
-                    card.appendChild(descricaoField);
+                    const estoqueCell = document.createElement('td');
+                    estoqueCell.textContent = produto.QUANTIDADE;
+                    row.appendChild(estoqueCell);
 
-                    // Preço
-                    const precoField = document.createElement('div');
-                    precoField.className = 'produto-field';
-                    precoField.innerHTML = `
-                        <label for="preco-${produto.ID}">Preço:</label>
-                        <input type="number" id="preco-${produto.ID}" class="preco" step="0.01" value="${produto.VENDA}">
-                    `;
-                    card.appendChild(precoField);
-
-                    // Estoque
-                    const estoqueField = document.createElement('div');
-                    estoqueField.className = 'produto-field';
-                    estoqueField.innerHTML = `
-                        <label for="estoque-${produto.ID}">Estoque:</label>
-                        <input type="number" id="estoque-${produto.ID}" class="estoque" value="${produto.QUANTIDADE}">
-                    `;
-                    card.appendChild(estoqueField);
-
-                    // Botão Gravar
-                    const saveButton = document.createElement('button');
-                    saveButton.className = 'edit-button';
-                    saveButton.innerText = 'Gravar';
-                    saveButton.setAttribute('data-id', produto.ID);
-                    card.appendChild(saveButton);
-
-                    produtosList.appendChild(card);
+                    const actionsCell = document.createElement('td');
+                    const editButton = document.createElement('button');
+                    editButton.className = 'btn btn-primary';
+                    editButton.textContent = 'Editar';
+                    editButton.setAttribute('data-id', produto.ID);
+                    editButton.addEventListener('click', () => {
+                        currentProductId = produto.ID; 
+                        openEditModal(produto); 
+                    });
+                    actionsCell.appendChild(editButton);
+                    row.appendChild(actionsCell);
+                    tbody.appendChild(row);
                 });
+
+                table.appendChild(tbody);
+                produtosList.appendChild(table);
 
                 updatePagination(data.currentPage, data.pageCount, data.hasNext);
             } else {
@@ -86,11 +86,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updatePagination(currentPage, pageCount, hasNext) {
-        paginationContainer.innerHTML = ''; // Limpa a paginação existente
+        paginationContainer.innerHTML = ''; 
 
-        if (pageCount <= 1) return; // Não exibe paginação se houver apenas uma página
+        if (pageCount <= 1) return; 
 
-        const maxButtons = 10; // Número máximo de botões de paginação a serem exibidos
+        const maxButtons = 5; 
         let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
         let endPage = startPage + maxButtons - 1;
 
@@ -105,20 +105,20 @@ document.addEventListener('DOMContentLoaded', function() {
             pageButton.className = 'pagination-button';
 
             if (i === currentPage) {
-                pageButton.disabled = true; // Desabilita o botão da página atual
+                pageButton.disabled = true; 
                 pageButton.classList.add('active');
             }
 
             pageButton.addEventListener('click', () => {
-                fetchProdutos(i, currentSearchTerm); // Chama a função fetchProdutos com o número da página e o termo de busca
+                fetchProdutos(i, currentSearchTerm); 
             });
 
-            paginationContainer.appendChild(pageButton); // Adiciona o botão à página
+            paginationContainer.appendChild(pageButton); 
         }
 
         if (hasNext) {
             const nextButton = document.createElement('button');
-            nextButton.textContent = 'Próximo';
+            nextButton.textContent = '>>';
             nextButton.className = 'pagination-button';
             nextButton.addEventListener('click', () => {
                 fetchProdutos(currentPage + 1, currentSearchTerm);
@@ -127,12 +127,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Função para salvar as alterações no produto
-    function saveChanges(id) {
-        const codigoBarras = document.getElementById(`codigo-barras-${id}`).value.trim();
-        const descricao = document.getElementById(`descricao-${id}`).value.trim();
-        const preco = parseFloat(document.getElementById(`preco-${id}`).value.trim());
-        const quantidade = parseInt(document.getElementById(`estoque-${id}`).value.trim());
+    function openEditModal(produto) {
+        document.getElementById('modal-codigo-barras').value = produto.CODIGOBARRAS;
+        document.getElementById('modal-descricao').value = produto.DESCRICAO;
+        document.getElementById('modal-preco').value = produto.VENDA;
+        document.getElementById('modal-estoque').value = produto.QUANTIDADE;
+        modal.show(); 
+    }
+
+    function saveChanges() {
+        const codigoBarras = document.getElementById('modal-codigo-barras').value.trim();
+        const descricao = document.getElementById('modal-descricao').value.trim();
+        const preco = parseFloat(document.getElementById('modal-preco').value.trim());
+        const quantidade = parseInt(document.getElementById('modal-estoque').value.trim());
     
         if (!codigoBarras || !descricao || isNaN(preco) || isNaN(quantidade)) {
             alert('Por favor, preencha todos os campos corretamente.');
@@ -151,12 +158,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify([{ id, codigoBarras, descricao, preco, quantidade }])
+            body: JSON.stringify([{ id: currentProductId, codigoBarras, descricao, preco, quantidade }])
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 alert('Produto atualizado com sucesso!');
+                modal.hide(); 
+                fetchProdutos(); 
             } else {
                 alert('Erro ao atualizar o produto!');
             }
@@ -165,53 +174,35 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro ao atualizar o produto:', error);
         });
     }
-        
 
-// Botão Gravar
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.edit-button').forEach(button => {
-        button.addEventListener('click', event => {
-            const id = event.target.getAttribute('data-id');
-            saveChanges(id);
-        });
+    modalCloseButton.addEventListener('click', () => {
+        modal.hide(); 
     });
-});
+
+    saveChangesButton.addEventListener('click', saveChanges);
 
     function logout() {
         localStorage.removeItem('token');
         window.location.href = '/';
     }
 
-    document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('edit-button')) {
-            const id = event.target.getAttribute('data-id');
-            saveChanges(id);
-        }
-    });
-
     logoutButton.addEventListener('click', logout);
 
     if (searchButton) {
-        // Adiciona o listener para o botão de busca
         searchButton.addEventListener('click', function() {
-            currentSearchTerm = searchInput.value.trim(); // Atualiza o termo de busca atual
-            fetchProdutos(1, currentSearchTerm); // Recarrega produtos filtrados na página 1
+            currentSearchTerm = searchInput.value.trim();
+            fetchProdutos(1, currentSearchTerm);
         });
-    } else {
-        console.error('Elemento com id "search-button" não encontrado.');
     }
 
     if (searchInput) {
-        // Adiciona o listener para atualizar a pesquisa quando o usuário pressiona Enter
         searchInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
-                currentSearchTerm = searchInput.value.trim(); // Atualiza o termo de busca atual
-                fetchProdutos(1, currentSearchTerm); // Recarrega produtos filtrados na página 1
+                currentSearchTerm = searchInput.value.trim();
+                fetchProdutos(1, currentSearchTerm);
             }
         });
-    } else {
-        console.error('Elemento com id "search-input" não encontrado.');
     }
-
-    fetchProdutos(); // Carregar a primeira página de produtos
+    
+    fetchProdutos(); 
 });

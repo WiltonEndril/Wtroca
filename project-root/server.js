@@ -103,8 +103,15 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
             return res.status(500).send('Erro interno ao conectar ao banco de dados');
         }
 
-        const countQuery = 'SELECT COUNT(*) AS total FROM ITENS WHERE UPPER(DESCRICAO) LIKE ?';
-        db.query(countQuery, [search], function(err, countResult) {
+        // Agora a busca será tanto pela descrição quanto pelo código de barras
+        const countQuery = `
+            SELECT COUNT(*) AS total 
+            FROM ITENS 
+            WHERE UPPER(DESCRICAO) LIKE ? 
+            OR UPPER(CODIGOBARRAS) LIKE ?
+        `;
+        
+        db.query(countQuery, [search, search], function(err, countResult) {
             if (err) {
                 console.error('Erro ao contar produtos:', err);
                 db.detach();
@@ -126,13 +133,15 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
                     ITENS_ESTOQUE ESTOQUE ON ITENS.CODIGOBARRAS = ESTOQUE.CODIGO
                 WHERE 
                     UPPER(ITENS.DESCRICAO) LIKE ?
+                    OR UPPER(ITENS.CODIGOBARRAS) LIKE ?
                 ORDER BY 
                     ITENS.ID
                 ROWS 
                     ? TO ?;
-`;
+            `;
         
-            db.query(selectQuery, [search, offset + 1, offset + limit], function(err, products) {
+            // Passando o termo de pesquisa para a descrição e o código de barras
+            db.query(selectQuery, [search, search, offset + 1, offset + limit], function(err, products) {
                 if (err) {
                     console.error('Erro ao executar a consulta:', err);
                     db.detach();

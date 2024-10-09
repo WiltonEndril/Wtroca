@@ -20,11 +20,13 @@
       "produto.css",
       "produtos.html",
       "produtos.js",
-      "script.js"
+      "script.js",
+      "quagga.min.js"
     ],
     "targets": [
       "node18-win-x64"
     ],
-    "output": "WF-troca"
+    "output": "WF-troca",
+    "icon": "ico256.ico"
   }
 }

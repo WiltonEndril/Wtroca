@@ -90,48 +90,48 @@ main {
   box-sizing: border-box;
 }
 
-/* Estilo dos produtos */
+/* Estilo da lista de produtos */
 #produtos-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: column;
+  gap: 20px; /* Espaço entre os produtos */
 }
 
-.produto-card {
+.produto-item {
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 5px;
   padding: 15px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  flex: 1 1 calc(25% - 20px); /* Ajusta a largura dos cards para 25% da linha */
-  box-sizing: border-box;
-  min-width: 200px; /* Define uma largura mínima para os cards */
+  display: flex;
+  flex-direction: column;
 }
 
-.produto-field {
+.produto-item .produto-field {
   margin-bottom: 10px;
 }
 
-.produto-field label {
+.produto-item .produto-field label {
   display: block;
   font-weight: bold;
 }
 
-.produto-field input {
+.produto-item .produto-field input {
   width: 100%;
   padding: 5px;
   box-sizing: border-box;
 }
 
-.edit-button {
+.produto-item .edit-button {
   background: #1c1c1c;
   color: #fff;
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+  align-self: flex-start;
 }
 
-.edit-button:hover {
+.produto-item .edit-button:hover {
   background: #333;
 }
 
@@ -174,8 +174,13 @@ main {
     display: block; /* Exibe o botão hambúrguer em telas pequenas */
   }
 
-  .produto-card {
-    flex: 1 1 100%; /* Largura total em dispositivos móveis */
+  #produtos-list {
+    padding: 10px; /* Espaço ao redor da lista de produtos em telas pequenas */
+  }
+
+  .produto-item {
+    flex-direction: column;
+    padding: 10px; /* Reduz o padding dos itens em telas pequenas */
   }
 }
 
