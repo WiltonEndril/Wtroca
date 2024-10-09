@@ -4,11 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutButton = document.getElementById('logout-button');
     const searchInput = document.getElementById('search-input');
     const searchButton = document.getElementById('search-button');
-    const cameraButton = document.getElementById('camera-button'); // Botão da câmera
     const modalElement = document.getElementById('editModal'); 
     const modalCloseButton = document.getElementById('modal-close');
     const saveChangesButton = document.getElementById('modal-save-button');
-    const quaggaContainer = document.getElementById('quagga-container'); // Elemento para o scanner de câmera
     
     const modal = new bootstrap.Modal(modalElement);
 
