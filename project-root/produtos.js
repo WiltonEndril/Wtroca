@@ -137,8 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const codigoBarras = document.getElementById('modal-codigo-barras').value.trim();
         const descricao = document.getElementById('modal-descricao').value.trim();
         const preco = parseFloat(document.getElementById('modal-preco').value.trim());
-        const quantidade = parseInt(document.getElementById('modal-estoque').value.trim());
+        const quantidade = parseFloat(document.getElementById('modal-estoque').value.trim()); // Use parseFloat para quantidade
     
+        // Verifica se a quantidade está dentro do intervalo permitido
         if (!codigoBarras || !descricao || isNaN(preco) || isNaN(quantidade)) {
             alert('Por favor, preencha todos os campos corretamente.');
             return;
@@ -156,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify([{ id: currentProductId, codigoBarras, descricao, preco, quantidade }])
+            body: JSON.stringify([{ id: currentProductId, codigoBarras, descricao, preco, quantidade }]) // Aqui está o ID
         })
         .then(response => response.json())
         .then(data => {
@@ -172,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro ao atualizar o produto:', error);
         });
     }
+    
 
     modalCloseButton.addEventListener('click', () => {
         modal.hide(); 

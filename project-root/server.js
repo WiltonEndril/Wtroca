@@ -130,7 +130,7 @@ app.get('/api/produtos', authenticateToken, (req, res) => {
                 FROM 
                     ITENS
                 LEFT JOIN 
-                    ITENS_ESTOQUE ESTOQUE ON ITENS.CODIGOBARRAS = ESTOQUE.CODIGO
+                    ITENS_ESTOQUE ESTOQUE ON ITENS.CODIGO = ESTOQUE.CODIGO
                 WHERE 
                     UPPER(ITENS.DESCRICAO) LIKE ?
                     OR UPPER(ITENS.CODIGOBARRAS) LIKE ?
@@ -179,34 +179,35 @@ app.post('/api/produtos/atualizar', authenticateToken, (req, res) => {
         }
 
         // Lista de promessas para atualização de produtos e estoque
-        const promises = produtos.map(produto => {
-            if (produto.descricao === undefined || isNaN(produto.preco) || isNaN(produto.quantidade) || produto.codigoBarras === undefined) {
-                return Promise.reject(new Error(`Dados inválidos para o produto com código de barras ${produto.codigoBarras}`));
+const promises = produtos.map(produto => {
+    if (produto.descricao === undefined || isNaN(produto.preco) || isNaN(produto.quantidade) || produto.codigoBarras === undefined) {
+        return Promise.reject(new Error(`Dados inválidos para o produto com ID ${produto.id}`)); // Alterado para ID
+    }
+
+    const updateItemQuery = 'UPDATE ITENS SET DESCRICAO = ?, VENDA = ? WHERE CODIGOBARRAS = ?';
+    const updateStockQuery = 'UPDATE ITENS_ESTOQUE SET SALDO = ? WHERE CODIGO = ?'; // Aqui você vai usar o ID para a atualização
+
+    return new Promise((resolve, reject) => {
+        db.query(updateItemQuery, [produto.descricao, produto.preco, produto.codigoBarras], (err) => {
+            if (err) {
+                console.error('Erro ao atualizar o produto:', err);
+                reject(err);
+                return;
             }
-        
-            const updateItemQuery = 'UPDATE ITENS SET DESCRICAO = ?, VENDA = ? WHERE CODIGOBARRAS = ?';
-            const updateStockQuery = 'UPDATE ITENS_ESTOQUE SET SALDO = ? WHERE CODIGO = ?';
-        
-            return new Promise((resolve, reject) => {
-                db.query(updateItemQuery, [produto.descricao, produto.preco, produto.codigoBarras], (err) => {
-                    if (err) {
-                        console.error('Erro ao atualizar o produto:', err);
-                        reject(err);
-                        return;
-                    }
-        
-                    // Atualiza o saldo do estoque, passando dois parâmetros: saldo e código
-                    db.query(updateStockQuery, [produto.quantidade, produto.codigoBarras], (err) => {
-                        if (err) {
-                            console.error('Erro ao atualizar o estoque:', err);
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
+
+            // Atualiza o saldo do estoque, passando dois parâmetros: saldo e código (que é o ID)
+            db.query(updateStockQuery, [produto.quantidade.toFixed(3), produto.id], (err) => { // Aqui você vai passar produto.id
+                if (err) {
+                    console.error('Erro ao atualizar o estoque:', err);
+                    reject(err);
+                } else {
+                    resolve();
+                }
             });
         });
+    });
+});
+
 
         // Executa todas as promessas
         Promise.all(promises)
